@@ -17,6 +17,7 @@ app.post("/create-checkout-session", async (req, res) => {
     const features = req.body.features.join(', '); // Join features into a comma-separated string
 
     const session = await stripe.checkout.sessions.create({
+        customer_email:req.body.userName,
         line_items: [
             {
                 price_data: {
