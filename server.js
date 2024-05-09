@@ -1,23 +1,26 @@
 const express = require("express");
 const app = express();
-const cors = require('cors')
-// This is a public sample test API key.
-// Don’t submit any personally identifiable information in requests made with this key.
-// Sign in to see your own test API key embedded in code samples.
-const Stripe = require("stripe")
-const dotenv =require('dotenv').config()
+const cors = require('cors');
+const Stripe = require("stripe");
+const dotenv = require('dotenv').config();
 
 const stripe = Stripe(`${process.env.SECRET_KEY}`);
 
 app.use(express.static("public"));
 app.use(express.json());
-app.use(cors())
+app.use(cors());
+
 app.post("/create-checkout-session", async (req, res) => {
     console.log(req.body);
     const features = req.body.features.join(', '); // Join features into a comma-separated string
 
     const session = await stripe.checkout.sessions.create({
-        customer_email:req.body.userName,
+        // shipping_address_collection: {
+        //     allowed_countries: ['IN',] // Specify allowed countries for shipping
+        // },
+        billing_address_collection: 'auto',
+        payment_method_types: ['card'],
+        customer_email: req.body.userName,
         line_items: [
             {
                 price_data: {
@@ -35,10 +38,10 @@ app.post("/create-checkout-session", async (req, res) => {
             },
         ],
         mode: 'payment',
-        success_url: 'https://subscription-saa-s-ui.vercel.app/checkoutSuccess',
+        success_url: `https://new-video-editor.vercel.app/listings?accessToken=${req.body.accessToken}`,
         cancel_url: 'https://subscription-saa-s-ui.vercel.app/checkoutFail',
-        
     });
+    console.log(session);
     res.send({ url: session.url });
 });
 
