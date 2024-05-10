@@ -1,5 +1,8 @@
 const express = require("express");
 const app = express();
+const rendertron = require('rendertron-middleware');
+// const PORT = process.env.PORT || 8080;
+const DIST_FOLDER = process.cwd() + '/public';
 const cors = require('cors');
 const Stripe = require("stripe");
 const dotenv = require('dotenv').config();
@@ -9,6 +12,28 @@ const stripe = Stripe(`${process.env.SECRET_KEY}`);
 app.use(express.static("public"));
 app.use(express.json());
 app.use(cors());
+
+// Add googlebot to the list of bots we will use Rendertron for
+const BOTS = rendertron.botUserAgents.concat('googlebot');
+const BOT_UA_PATTERN = new RegExp(BOTS.join('|'), 'i');
+
+app.set('view engine', 'html');
+
+// Add Rendertron middleware to send bot requests to Rendertron
+app.use(rendertron.makeMiddleware({
+  proxyUrl: 'https://render-tron.appspot.com/render', // this is a DEMO URL! Do not use this in production!
+  userAgentPattern: BOT_UA_PATTERN
+}));
+
+// Static Assets
+app.get('*.*', express.static('public'));
+
+// Point all routes to index...
+app.get('*', (req, res) => {
+  res.set('Vary', 'User-Agent');
+  res.sendFile(DIST_FOLDER + '/index.html');
+});
+
 
 app.post("/create-checkout-session", async (req, res) => {
     console.log(req.body);

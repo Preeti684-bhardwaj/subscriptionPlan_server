@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start":"npx nodemon server.js"
+    "start": "npx nodemon server.js"
   },
   "author": "",
   "license": "ISC",
@@ -14,6 +14,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "nodemon": "^3.1.0",
+    "rendertron-middleware": "^0.1.5",
     "stripe": "^15.0.0"
   }
 }
