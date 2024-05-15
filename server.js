@@ -1,19 +1,46 @@
 const express = require("express");
-const app = express();
+const axios =require('axios')
+const path=require('path')
+const ipRangeCheck=require('ip-range-check')
 const cors = require('cors');
-const Stripe = require("stripe");
 const dotenv = require('dotenv').config();
+
+const app = express();
+const Stripe = require("stripe");
 
 const stripe = Stripe(`${process.env.SECRET_KEY}`);
 
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname,'public')));
 app.use(express.json());
+app.use(require('prerender-node').set('prerenderToken', `${process.env.PRERENDER_TOKEN}`));
 app.use(cors());
 
 // // Static Assets
 // app.get('*.*', express.static('public'));
+async function isIPInPrerenderList(ip){
+    try{
+        const response =await axios.getAdapter('https://ipranges.prerender.io/ipranges.txt');
+        const ipRanges=response.data.split('\n');
+        return ipRanges.some(ipRange=>ipRangeCheck(ip,ipRange));
+    }catch{
+        console.log('error fetching prerender IP lists',error);
+        return false;
+    }
+}
 
-app.use(require('prerender-node').set('prerenderToken', `${process.env.PRERENDER_TOKEN}`));
+// Route to check IP 
+app.post('/check-ip',async(req,res)=>{
+    const {ip}=req.body;
+    if(!ip){
+        return res.status(400).send({error:'IP address is required'});
+    }
+    const isInList=await isIPInPrerenderList(ip);
+    res.send({ip,isInList});
+});
+
+app.get('/',(req,res)=>{
+    res.sendFile(path.join(__dirname ,'public','index.html'));
+})
 
 app.post("/create-checkout-session", async (req, res) => {
     console.log(req.body);
